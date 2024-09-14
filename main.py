@@ -1,16 +1,34 @@
-# This is a sample Python script.
+import asyncio
+import os
+import pandas as pd
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
-
-
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+from telethon import TelegramClient
+from telethon.sessions import StringSession
+from dotenv import load_dotenv
 
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
+xls = pd.ExcelFile('users.xlsx')
+df = pd.read_excel(xls, 'Sheet1')
+print(df)
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+potential_members = df['Users to be Added'].tolist()
+
+
+async def main():
+    load_dotenv()
+    api_id = int(os.getenv('CLIENT_API_ID'))
+    api_hash = os.getenv('CLIENT_API_HASH')
+    session_str = os.getenv('CLIENT_SESSION')
+    group_invite_link = os.getenv('GROUP_INVITE_LINK')
+
+    async with TelegramClient(StringSession(session_str), api_id, api_hash) as client:
+        for potential_member in potential_members:
+            try:
+                await client.send_message(potential_member, group_invite_link)
+                print(f'Message sent to @{potential_member}')
+            except Exception as e:
+                print(f'Failed to send message to @{potential_member}: {e}')
+
+
+# Run the main function
+asyncio.run(main())
